@@ -1,5 +1,6 @@
 /* eslint-disable no-mixed-spaces-and-tabs */
 /* eslint-disable no-unused-vars */
+const { isValidObjectId } = require("mongoose");
 const Data = require("../model/dataModel");
 const Friend = require("../model/friendsModel");
 const { NOTEXIST, ALREADYSENT, REQUESTSENT, ACCEPTEDREQUEST, NOTINREQUEST } = require("../utils/messages");
@@ -61,8 +62,9 @@ const detailFriendService = async (body) => {
 	if (!check2 || !check2.accepted) {
 		return { message: NOTEXIST, status: 400 };
 	}
+	console.log( body.id);
 	let result = await Friend.aggregate([
-		{$match:{recieverid:data._id} },
+		{$match:{senderid:check2.senderid ,recieverid:check2.recieverid } },
 		{$lookup: {
 			from: "datas",
 			localField: "senderid",
