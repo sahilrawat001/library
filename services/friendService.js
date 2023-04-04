@@ -2,6 +2,7 @@
 /* eslint-disable no-unused-vars */
 const { isValidObjectId } = require("mongoose");
 const Data = require("../model/dataModel");
+let obj = require("mongoose").Types.ObjectId;
 const Friend = require("../model/friendsModel");
 const { NOTEXIST, ALREADYSENT, REQUESTSENT, ACCEPTEDREQUEST, NOTINREQUEST } = require("../utils/messages");
 
@@ -53,42 +54,33 @@ const acceptRequestService = async (body) => {
       
 };   
 
-const detailFriendService = async (body) => { 
+const detailFriendService = async (body) => {
 	console.log(body);
 	let data = await Data.findOne({ email: body.usermail });
 	console.log(data, "--");
-	let check2 = await Friend.findOne({ recieverid: data._id, senderid: body.id });
-	console.log(check2, "===");
+	let check2 = await Friend.findOne({
+		$or:[
+		
+			{ recieverid: data._id, senderid: body.id },
+			{ recieverid: body.id, senderid: data._id }]
+	
+});
+	console.log(check2.accepted, "===");
 	if (!check2 || !check2.accepted) {
 		return { message: NOTEXIST, status: 400 };
 	}
-	console.log( body.id);
-	let result = await Friend.aggregate([
-		{$match:{senderid:check2.senderid ,recieverid:check2.recieverid } },
-		{$lookup: {
-			from: "datas",
-			localField: "senderid",
-			foreignField: "_id",
-			as: "results"
-		}
-		},
-		{$unwind: {
-			path: "$results",
-			preserveNullAndEmptyArrays: true
-		}
-		},
-		{$match:{accepted:true }},
-		{
+ 	let result = await Data.aggregate([
+		{$match:{_id:new obj( body.id) } },
+ 		{
 		    $project: {
-		        "results.username": 1,
-				"results.email": 1,
-				"result.books":1
+		        "username": 1,
+				"email": 1,
+				"books":1
 		    }
 		} 
         
 	]); 
-	console.log(result);
-	return result;
+ 	return result;
 
 };
 
